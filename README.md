@@ -35,7 +35,7 @@ Theoretically, it can represent numbers from 1.0 x 10⁻¹⁰²³ to 9.99999999 
 
 However I only checked four digits at the print function, so going over 10⁹⁹⁹⁹ might cause problems.
 
-Precision is always 8 digits of precision.
+Precision is always 8 digits of decimal points.
 
 ### Specification
 
