@@ -1,0 +1,16 @@
+[main]
+input: input.scx
+output: float_demo.scx
+[DataEditor.py]
+[ExtraDataEditor.py]
+[../epfloat.py]
+[dataDumper]
+
+[main.eps]
+
+[freeze]
+freeze : false
+[unlimiter]
+
+
+

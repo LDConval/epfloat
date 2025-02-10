@@ -1,0 +1,705 @@
+import epfloat;
+
+const gw_locs = [$L("gw1"), $L("gw2"), $L("gw3")];
+const gw_epds = [$L("gw1"), $L("gw2"), $L("gw3")];
+
+const dragoons = [$U("Protoss Dragoon"), 61, 74];
+const dragoon_weapons = [66, 67, 68];
+const dragoon_weapon_flingys = [159, 161, 162];
+const wraiths = [$U("Terran Wraith"), $U("Protoss Scout"), $U("Zerg Mutalisk")];
+const upgrades = [20, 21, 22];
+
+const spawnCounts = [10, 10, 10];
+
+const dragoon_build_strs = [601, 601, 601];
+const dragoon_weapon_strs = [904, 924, 944];
+const wraith_subtitle_strs = [1345, 1337, 1352];
+const upgrade_strs = [469, 469, 469];
+
+const tech1_str1 = 489;
+const tech1_str2 = 701;
+const tech2_str1 = 492;
+const tech2_str2 = 704;
+const tech3_str1 = 495;
+const tech3_str2 = 707;
+const tech4_str1 = 498;
+const tech4_str2 = 710;
+
+const dscaleP1 = epfloat.EPFloat("10");
+const dscaleP2 = epfloat.EPFloat("10");
+const dscaleP3 = epfloat.EPFloat("10");
+
+var levelP1 = 0;
+var levelP2 = 0;
+var levelP3 = 0;
+var killP1 = 0;
+var killP2 = 0;
+var killP3 = 0;
+var needkillP1 = 10;
+var needkillP2 = 10;
+var needkillP3 = 10;
+const damageP1 = epfloat.EPFloat("4.5");
+const damageP2 = epfloat.EPFloat("4.5");
+const damageP3 = epfloat.EPFloat("4.5");
+const hpP1 = epfloat.EPFloat("39");
+const hpP2 = epfloat.EPFloat("39");
+const hpP3 = epfloat.EPFloat("39");
+const goldP1 = epfloat.EPFloat("0.6");
+const goldP2 = epfloat.EPFloat("0.6");
+const goldP3 = epfloat.EPFloat("0.6");
+const costP1 = epfloat.EPFloat("0.5");
+const costP2 = epfloat.EPFloat("0.5");
+const costP3 = epfloat.EPFloat("0.5");
+const upcostP1 = epfloat.EPFloat("8.8");
+const upcostP2 = epfloat.EPFloat("8.8");
+const upcostP3 = epfloat.EPFloat("8.8");
+const wraithgoldP1 = epfloat.EPFloat("5");
+const wraithgoldP2 = epfloat.EPFloat("5");
+const wraithgoldP3 = epfloat.EPFloat("5");
+
+const hpPerLv = epfloat.EPFloat("15");
+const goldPerLv = epfloat.EPFloat("20");
+const damagePerLv = epfloat.EPFloat("1.1");
+const upcostPerLv = epfloat.EPFloat("1.1131");
+const costPerDragoon = epfloat.EPFloat("50");
+const addCostPerDragoon = epfloat.EPFloat("2.5");
+
+const costTech1 = epfloat.EPFloat("90000");
+const costTech2 = epfloat.EPFloat("1.5e+15");
+const costTech3 = epfloat.EPFloat("7.8e+34");
+const costTech4P1 = epfloat.EPFloat("2.222222222e+22");
+const costTech4P2 = epfloat.EPFloat("2.222222222e+22");
+const costTech4P3 = epfloat.EPFloat("2.222222222e+22");
+const tech1 = Upgrade(33);
+const tech2 = Upgrade(34);
+const tech3 = Upgrade(35);
+const tech4 = Upgrade(36);
+const buildTech1 = $U("Terran Barracks");
+const buildTech2 = $U("Terran Command Center");
+const buildTech3 = $U("Terran Factory");
+const buildTech4 = $U("Terran Starport");
+
+function displayPlayer() {
+	if(getuserplayerid() == P1) {
+		printAllAt(0, "\x13\x19Level: \x07{}\x1C ### \x19Exp: \x07{}\x18 / {}\x1C ### \x19Gold: \x07{:t}", levelP1, killP1, needkillP1, goldP1.stringbuffer());
+	}
+	if(getuserplayerid() == P2) {
+		printAllAt(0, "\x13\x19Level: \x07{}\x1C ### \x19Exp: \x07{}\x18 / {}\x1C ### \x19Gold: \x07{:t}", levelP2, killP2, needkillP2, goldP2.stringbuffer());
+	}
+	if(getuserplayerid() == P3) {
+		printAllAt(0, "\x13\x19Level: \x07{}\x1C ### \x19Exp: \x07{}\x18 / {}\x1C ### \x19Gold: \x07{:t}", levelP3, killP3, needkillP3, goldP3.stringbuffer());
+	}
+	if(Memory(0x6284B8, AtLeast, 1)) {
+		const sptr, sepd = cunitepdread_epd(EPD(0x6284B8));
+		const selectedUnit = CUnit(sepd);
+		if(selectedUnit.unitType == wraiths[P1]) {
+			const actualHp = epfloat.EPFloat(selectedUnit.hp / 256);
+			actualHp.div(dscaleP1);
+			settblf2(wraith_subtitle_strs[P1], 6, "{:t}", actualHp.stringbuffer());
+		}
+		else if(selectedUnit.unitType == wraiths[P2]) {
+			const actualHp = epfloat.EPFloat(selectedUnit.hp / 256);
+			actualHp.div(dscaleP2);
+			settblf2(wraith_subtitle_strs[P2], 6, "{:t}", actualHp.stringbuffer());
+		}
+		else if(selectedUnit.unitType == wraiths[P3]) {
+			const actualHp = epfloat.EPFloat(selectedUnit.hp / 256);
+			actualHp.div(dscaleP3);
+			settblf2(wraith_subtitle_strs[P3], 6, "{:t}", actualHp.stringbuffer());
+		}
+	}
+}
+
+function updateStatP1() {
+	while(hpP1.exponent >= 5 + 2*epfloat.EXPONENT_BIAS - dscaleP1.exponent) {
+		dscaleP1.exponent -= 1;
+	}
+	const finalDamage = dscaleP1 * damageP1;
+	const finalHp = dscaleP1 * hpP1;
+	Weapon(dragoon_weapons[P1]).damage = finalDamage.toshort();
+	TrgUnit(wraiths[P1]).maxHp = 256 * finalHp.toint();
+	settblf(wraith_subtitle_strs[P1], 0, "\x16HP: \x06\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r \x1C/ \x19{:t}\x0C", hpP1.stringbuffer());
+	settblf(dragoon_weapon_strs[P1], 0, "Phase Disruptor\nDamage: {:t}\x0C", damageP1.stringbuffer());
+	if(getuserplayerid() == P1) {
+		settblf(dragoon_build_strs[P1], 0, "d\x00Warp in \x03D\x01ragoon\nCost: {:t} \x19Gold\x0C", costP1.stringbuffer());
+		settblf(upgrade_strs[P1], 0, "w\x00Upgrade Ground \x03W\x01eapons\nIncrease dragoon damage by 10%.\nCost: {:t} \x19Gold\x0C", upcostP1.stringbuffer());
+	}
+}
+
+var shouldUpdateP1 = 1000;
+function checkDragoonP1() {
+	shouldUpdateP1++;
+	const gateway = CUnit(gw_epds[P1]);
+	if(gateway.secondaryOrder == 38 && gateway.currentBuildUnit > 0) {
+		const buildUnit = gateway.currentBuildUnit;
+		if(buildUnit.remainingBuildTime > 100) {
+			buildUnit.remainingBuildTime = 1;
+			goldP1.sub(costP1);
+			costP1.add(addCostPerDragoon);
+			costP1.mul(costPerDragoon);
+			shouldUpdateP1 = 1000;
+		}
+	} else {
+		SetResources(P1, SetTo, 100, Ore);
+	}
+	
+	const upg = Upgrade(upgrades[P1]);
+	if(upg[P1] >= 1) {
+		upg[P1] = 0;
+		goldP1.sub(upcostP1);
+		damageP1.mul(damagePerLv);
+		upcostP1.mul(upcostPerLv);
+		shouldUpdateP1 = 1000;
+	}
+	
+	once(tech1[P1] >= 1) {
+		goldP1.sub(costTech1);
+		if(P1 != 0) {
+			TrgUnit(dragoons[P1]).seekRange = 5;
+			Weapon(dragoon_weapons[P1]).maxRange = 160;
+		}
+	}
+	once(tech2[P1] >= 1) {
+		goldP1.sub(costTech2);
+		Weapon(dragoon_weapons[P1]).cooldown = 19;
+		Flingy(dragoon_weapon_flingys[P1]).topSpeed = 34133;
+		Flingy(dragoon_weapon_flingys[P1]).acceleration = 1800;
+	}
+	once(tech3[P1] >= 1) {
+		goldP1.sub(costTech3);
+		Weapon(dragoon_weapons[P1]).damageFactor = 2;
+		Weapon(dragoon_weapons[P1]).launchSpin = 64;
+		Flingy(dragoon_weapon_flingys[P1]).turnRadius = 40;
+	}
+	if(tech4[P1] >= 1) {
+		goldP1.sub(costTech4P1);
+		tech4[P1] = 0;
+		costTech4P1.exponent += 11;
+		if(costTech4P1.mantissa > 900000000) {
+			costTech4P1.mantissa = 111111111;
+		}
+		else {
+			costTech4P1.mantissa += 111111111;
+		}
+		spawnCounts[P1] += 5;
+		if(getuserplayerid() == P1) {
+			settblf(tech4_str1, 0, "i\x00\x03I\x01ncrease Enemy Spawns\nCost: {:t} \x19Gold\x0C", costTech4P1.stringbuffer());
+			settblf(tech4_str2, 0, "\x03I\x01ncrease Enemy Spawns\nCost: {:t} \x19Gold\x0C", costTech4P1.stringbuffer());
+		}
+	}
+	
+	if(Score(P1, Kills, AtLeast, 1000)) {
+		SetScore(P1, Subtract, 1000, Kills);
+		goldP1.add(wraithgoldP1);
+		killP1++;
+	}
+	
+	if(goldP1.gte(upcostP1)) {
+		Upgrade(upgrades[P1]).mineralCostBase = 0;
+	}
+	else {
+		Upgrade(upgrades[P1]).mineralCostBase = 9999;
+	}
+	if(goldP1.gte(costP1)) {
+		TrgUnit(dragoons[P1]).mineralCost = 100;
+	}
+	else {
+		TrgUnit(dragoons[P1]).mineralCost = 9999;
+	}
+	if(goldP1.gte(costTech1)) {
+		if(Command(P1, AtMost, 0, buildTech1)) {
+			GiveUnits(1, buildTech1, 9, "Anywhere", P1);
+		}
+	}
+	else {
+		GiveUnits(All, buildTech1, P1, "Anywhere", 9);
+	}
+	if(goldP1.gte(costTech2)) {
+		if(Command(P1, AtMost, 0, buildTech2)) {
+			GiveUnits(1, buildTech2, 9, "Anywhere", P1);
+		}
+	}
+	else {
+		GiveUnits(All, buildTech2, P1, "Anywhere", 9);
+	}
+	if(goldP1.gte(costTech3)) {
+		if(Command(P1, AtMost, 0, buildTech3)) {
+			GiveUnits(1, buildTech3, 9, "Anywhere", P1);
+		}
+	}
+	else {
+		GiveUnits(All, buildTech3, P1, "Anywhere", 9);
+	}
+	if(goldP1.gte(costTech4P1)) {
+		if(Command(P1, AtMost, 0, buildTech4)) {
+			GiveUnits(1, buildTech4, 9, "Anywhere", P1);
+		}
+	}
+	else {
+		GiveUnits(All, buildTech4, P1, "Anywhere", 9);
+	}
+	
+	if(ElapsedTime(AtLeast, 5)) {
+		if(Command(P1 + 5, AtMost, 0, wraiths[P1])) {
+			for(var i=0; i<spawnCounts[P1]; i++) {
+				setloc("createpoint", 832 + rand() % 736, 32 + rand() % 480);
+				CreateUnit(1, wraiths[P1], "createpoint", P1 + 5);
+			}
+			Order("(men)", P1 + 5, "Anywhere", Patrol, "nexus");
+		}
+	}
+	
+	if(Bring(P1, AtLeast, 1, "(men)", "up")) {
+		MoveUnit(All, "(men)", P1, "up", "nexus");
+		if(killP1 >= needkillP1) {
+			levelP1 += 1;
+			killP1 = 0;
+			if(needkillP1 < 100) {
+				needkillP1 += 5;
+			}
+			else {
+				needkillP1 += 1;
+			}
+			hpP1.mul(hpPerLv);
+			wraithgoldP1.mul(goldPerLv);
+			KillUnit(wraiths[P1], P1 + 5);
+			shouldUpdateP1 = 1000;
+			SetScore(P1, SetTo, levelP1, Custom);
+		}
+	}
+	
+	if(shouldUpdateP1 > 32) {
+		shouldUpdateP1 = 0;
+		updateStatP1();
+	}
+}
+
+function updateStatP2() {
+	while(hpP2.exponent >= 5 + 2*epfloat.EXPONENT_BIAS - dscaleP2.exponent) {
+		dscaleP2.exponent -= 1;
+	}
+	const finalDamage = dscaleP2 * damageP2;
+	const finalHp = dscaleP2 * hpP2;
+	Weapon(dragoon_weapons[P2]).damage = finalDamage.toshort();
+	TrgUnit(wraiths[P2]).maxHp = 256 * finalHp.toint();
+	settblf(wraith_subtitle_strs[P2], 0, "\x16HP: \x06\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r \x1C/ \x19{:t}\x0C", hpP2.stringbuffer());
+	settblf(dragoon_weapon_strs[P2], 0, "Phase Disruptor\nDamage: {:t}\x0C", damageP2.stringbuffer());
+	if(getuserplayerid() == P2) {
+		settblf(dragoon_build_strs[P2], 0, "d\x00Warp in \x03D\x01ragoon\nCost: {:t} \x19Gold\x0C", costP2.stringbuffer());
+		settblf(upgrade_strs[P2], 0, "w\x00Upgrade Ground \x03W\x01eapons\nIncrease dragoon damage by 10%.\nCost: {:t} \x19Gold\x0C", upcostP2.stringbuffer());
+	}
+}
+
+var shouldUpdateP2 = 1000;
+function checkDragoonP2() {
+	shouldUpdateP2++;
+	const gateway = CUnit(gw_epds[P2]);
+	if(gateway.secondaryOrder == 38 && gateway.currentBuildUnit > 0) {
+		const buildUnit = gateway.currentBuildUnit;
+		if(buildUnit.remainingBuildTime > 100) {
+			buildUnit.remainingBuildTime = 1;
+			goldP2.sub(costP2);
+			costP2.add(addCostPerDragoon);
+			costP2.mul(costPerDragoon);
+			shouldUpdateP2 = 1000;
+		}
+	} else {
+		SetResources(P2, SetTo, 100, Ore);
+	}
+	
+	const upg = Upgrade(upgrades[P2]);
+	if(upg[P2] >= 1) {
+		upg[P2] = 0;
+		goldP2.sub(upcostP2);
+		damageP2.mul(damagePerLv);
+		upcostP2.mul(upcostPerLv);
+		shouldUpdateP2 = 1000;
+	}
+	
+	once(tech1[P2] >= 1) {
+		goldP2.sub(costTech1);
+		if(P2 != 0) {
+			TrgUnit(dragoons[P2]).seekRange = 5;
+			Weapon(dragoon_weapons[P2]).maxRange = 160;
+		}
+	}
+	once(tech2[P2] >= 1) {
+		goldP2.sub(costTech2);
+		Weapon(dragoon_weapons[P2]).cooldown = 19;
+		Flingy(dragoon_weapon_flingys[P2]).topSpeed = 34133;
+		Flingy(dragoon_weapon_flingys[P2]).acceleration = 1800;
+	}
+	once(tech3[P2] >= 1) {
+		goldP2.sub(costTech3);
+		Weapon(dragoon_weapons[P2]).damageFactor = 2;
+		Weapon(dragoon_weapons[P2]).launchSpin = 64;
+		Flingy(dragoon_weapon_flingys[P2]).turnRadius = 40;
+	}
+	if(tech4[P2] >= 1) {
+		goldP2.sub(costTech4P2);
+		tech4[P2] = 0;
+		costTech4P2.exponent += 11;
+		if(costTech4P2.mantissa > 900000000) {
+			costTech4P2.mantissa = 111111111;
+		}
+		else {
+			costTech4P2.mantissa += 111111111;
+		}
+		spawnCounts[P2] += 5;
+		if(getuserplayerid() == P2) {
+			settblf(tech4_str1, 0, "i\x00\x03I\x01ncrease Enemy Spawns\nCost: {:t} \x19Gold\x0C", costTech4P2.stringbuffer());
+			settblf(tech4_str2, 0, "\x03I\x01ncrease Enemy Spawns\nCost: {:t} \x19Gold\x0C", costTech4P2.stringbuffer());
+		}
+	}
+	
+	if(Score(P2, Kills, AtLeast, 1000)) {
+		SetScore(P2, Subtract, 1000, Kills);
+		goldP2.add(wraithgoldP2);
+		killP2++;
+	}
+	
+	if(goldP2.gte(upcostP2)) {
+		Upgrade(upgrades[P2]).mineralCostBase = 0;
+	}
+	else {
+		Upgrade(upgrades[P2]).mineralCostBase = 9999;
+	}
+	if(goldP2.gte(costP2)) {
+		TrgUnit(dragoons[P2]).mineralCost = 100;
+	}
+	else {
+		TrgUnit(dragoons[P2]).mineralCost = 9999;
+	}
+	if(goldP2.gte(costTech1)) {
+		if(Command(P2, AtMost, 0, buildTech1)) {
+			GiveUnits(1, buildTech1, 9, "Anywhere", P2);
+		}
+	}
+	else {
+		GiveUnits(All, buildTech1, P2, "Anywhere", 9);
+	}
+	if(goldP2.gte(costTech2)) {
+		if(Command(P2, AtMost, 0, buildTech2)) {
+			GiveUnits(1, buildTech2, 9, "Anywhere", P2);
+		}
+	}
+	else {
+		GiveUnits(All, buildTech2, P2, "Anywhere", 9);
+	}
+	if(goldP2.gte(costTech3)) {
+		if(Command(P2, AtMost, 0, buildTech3)) {
+			GiveUnits(1, buildTech3, 9, "Anywhere", P2);
+		}
+	}
+	else {
+		GiveUnits(All, buildTech3, P2, "Anywhere", 9);
+	}
+	if(goldP2.gte(costTech4P2)) {
+		if(Command(P2, AtMost, 0, buildTech4)) {
+			GiveUnits(1, buildTech4, 9, "Anywhere", P2);
+		}
+	}
+	else {
+		GiveUnits(All, buildTech4, P2, "Anywhere", 9);
+	}
+	
+	if(ElapsedTime(AtLeast, 5)) {
+		if(Command(P2 + 5, AtMost, 0, wraiths[P2])) {
+			for(var i=0; i<spawnCounts[P2]; i++) {
+				setloc("createpoint", 832 + rand() % 736, 32 + rand() % 480);
+				CreateUnit(1, wraiths[P2], "createpoint", P2 + 5);
+			}
+			Order("(men)", P2 + 5, "Anywhere", Patrol, "nexus");
+		}
+	}
+	
+	if(Bring(P2, AtLeast, 1, "(men)", "up")) {
+		MoveUnit(All, "(men)", P2, "up", "nexus");
+		if(killP2 >= needkillP2) {
+			levelP2 += 1;
+			killP2 = 0;
+			if(needkillP2 < 100) {
+				needkillP2 += 5;
+			}
+			else {
+				needkillP2 += 1;
+			}
+			hpP2.mul(hpPerLv);
+			wraithgoldP2.mul(goldPerLv);
+			KillUnit(wraiths[P2], P2 + 5);
+			shouldUpdateP2 = 1000;
+			SetScore(P2, SetTo, levelP2, Custom);
+		}
+	}
+	
+	if(shouldUpdateP2 > 32) {
+		shouldUpdateP2 = 0;
+		updateStatP2();
+	}
+}
+
+function updateStatP3() {
+	while(hpP3.exponent >= 5 + 2*epfloat.EXPONENT_BIAS - dscaleP3.exponent) {
+		dscaleP3.exponent -= 1;
+	}
+	const finalDamage = dscaleP3 * damageP3;
+	const finalHp = dscaleP3 * hpP3;
+	Weapon(dragoon_weapons[P3]).damage = finalDamage.toshort();
+	TrgUnit(wraiths[P3]).maxHp = 256 * finalHp.toint();
+	settblf(wraith_subtitle_strs[P3], 0, "\x16HP: \x06\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r \x1C/ \x19{:t}\x0C", hpP3.stringbuffer());
+	settblf(dragoon_weapon_strs[P3], 0, "Phase Disruptor\nDamage: {:t}\x0C", damageP3.stringbuffer());
+	if(getuserplayerid() == P3) {
+		settblf(dragoon_build_strs[P3], 0, "d\x00Warp in \x03D\x01ragoon\nCost: {:t} \x19Gold\x0C", costP3.stringbuffer());
+		settblf(upgrade_strs[P3], 0, "w\x00Upgrade Ground \x03W\x01eapons\nIncrease dragoon damage by 10%.\nCost: {:t} \x19Gold\x0C", upcostP3.stringbuffer());
+	}
+}
+
+var shouldUpdateP3 = 1000;
+function checkDragoonP3() {
+	shouldUpdateP3++;
+	const gateway = CUnit(gw_epds[P3]);
+	if(gateway.secondaryOrder == 38 && gateway.currentBuildUnit > 0) {
+		const buildUnit = gateway.currentBuildUnit;
+		if(buildUnit.remainingBuildTime > 100) {
+			buildUnit.remainingBuildTime = 1;
+			goldP3.sub(costP3);
+			costP3.add(addCostPerDragoon);
+			costP3.mul(costPerDragoon);
+			shouldUpdateP3 = 1000;
+		}
+	} else {
+		SetResources(P3, SetTo, 100, Ore);
+	}
+	
+	const upg = Upgrade(upgrades[P3]);
+	if(upg[P3] >= 1) {
+		upg[P3] = 0;
+		goldP3.sub(upcostP3);
+		damageP3.mul(damagePerLv);
+		upcostP3.mul(upcostPerLv);
+		shouldUpdateP3 = 1000;
+	}
+	
+	once(tech1[P3] >= 1) {
+		goldP3.sub(costTech1);
+		if(P3 != 0) {
+			TrgUnit(dragoons[P3]).seekRange = 5;
+			Weapon(dragoon_weapons[P3]).maxRange = 160;
+		}
+	}
+	once(tech2[P3] >= 1) {
+		goldP3.sub(costTech2);
+		Weapon(dragoon_weapons[P3]).cooldown = 19;
+		Flingy(dragoon_weapon_flingys[P3]).topSpeed = 34133;
+		Flingy(dragoon_weapon_flingys[P3]).acceleration = 1800;
+	}
+	once(tech3[P3] >= 1) {
+		goldP3.sub(costTech3);
+		Weapon(dragoon_weapons[P3]).damageFactor = 2;
+		Weapon(dragoon_weapons[P3]).launchSpin = 64;
+		Flingy(dragoon_weapon_flingys[P3]).turnRadius = 40;
+	}
+	if(tech4[P3] >= 1) {
+		goldP3.sub(costTech4P3);
+		tech4[P3] = 0;
+		costTech4P3.exponent += 11;
+		if(costTech4P3.mantissa > 900000000) {
+			costTech4P3.mantissa = 111111111;
+		}
+		else {
+			costTech4P3.mantissa += 111111111;
+		}
+		spawnCounts[P3] += 5;
+		if(getuserplayerid() == P3) {
+			settblf(tech4_str1, 0, "i\x00\x03I\x01ncrease Enemy Spawns\nCost: {:t} \x19Gold\x0C", costTech4P3.stringbuffer());
+			settblf(tech4_str2, 0, "\x03I\x01ncrease Enemy Spawns\nCost: {:t} \x19Gold\x0C", costTech4P3.stringbuffer());
+		}
+	}
+	
+	if(Score(P3, Kills, AtLeast, 1000)) {
+		SetScore(P3, Subtract, 1000, Kills);
+		goldP3.add(wraithgoldP3);
+		killP3++;
+	}
+	
+	if(goldP3.gte(upcostP3)) {
+		Upgrade(upgrades[P3]).mineralCostBase = 0;
+	}
+	else {
+		Upgrade(upgrades[P3]).mineralCostBase = 9999;
+	}
+	if(goldP3.gte(costP3)) {
+		TrgUnit(dragoons[P3]).mineralCost = 100;
+	}
+	else {
+		TrgUnit(dragoons[P3]).mineralCost = 9999;
+	}
+	if(goldP3.gte(costTech1)) {
+		if(Command(P3, AtMost, 0, buildTech1)) {
+			GiveUnits(1, buildTech1, 9, "Anywhere", P3);
+		}
+	}
+	else {
+		GiveUnits(All, buildTech1, P3, "Anywhere", 9);
+	}
+	if(goldP3.gte(costTech2)) {
+		if(Command(P3, AtMost, 0, buildTech2)) {
+			GiveUnits(1, buildTech2, 9, "Anywhere", P3);
+		}
+	}
+	else {
+		GiveUnits(All, buildTech2, P3, "Anywhere", 9);
+	}
+	if(goldP3.gte(costTech3)) {
+		if(Command(P3, AtMost, 0, buildTech3)) {
+			GiveUnits(1, buildTech3, 9, "Anywhere", P3);
+		}
+	}
+	else {
+		GiveUnits(All, buildTech3, P3, "Anywhere", 9);
+	}
+	if(goldP3.gte(costTech4P3)) {
+		if(Command(P3, AtMost, 0, buildTech4)) {
+			GiveUnits(1, buildTech4, 9, "Anywhere", P3);
+		}
+	}
+	else {
+		GiveUnits(All, buildTech4, P3, "Anywhere", 9);
+	}
+	
+	if(ElapsedTime(AtLeast, 5)) {
+		if(Command(P3 + 5, AtMost, 0, wraiths[P3])) {
+			for(var i=0; i<spawnCounts[P3]; i++) {
+				setloc("createpoint", 832 + rand() % 736, 32 + rand() % 480);
+				CreateUnit(1, wraiths[P3], "createpoint", P3 + 5);
+			}
+			Order("(men)", P3 + 5, "Anywhere", Patrol, "nexus");
+		}
+	}
+	
+	if(Bring(P3, AtLeast, 1, "(men)", "up")) {
+		MoveUnit(All, "(men)", P3, "up", "nexus");
+		if(killP3 >= needkillP3) {
+			levelP3 += 1;
+			killP3 = 0;
+			if(needkillP3 < 100) {
+				needkillP3 += 5;
+			}
+			else {
+				needkillP3 += 1;
+			}
+			hpP3.mul(hpPerLv);
+			wraithgoldP3.mul(goldPerLv);
+			KillUnit(wraiths[P3], P3 + 5);
+			shouldUpdateP3 = 1000;
+			SetScore(P3, SetTo, levelP3, Custom);
+		}
+	}
+	
+	if(shouldUpdateP3 > 32) {
+		shouldUpdateP3 = 0;
+		updateStatP3();
+	}
+}
+
+function checkVictory() {
+	once(levelP1 >= 50) {
+		const cp = getcurpl();
+		setcurpl(P1);
+		Victory();
+		setcurpl(cp);
+	}
+	once(levelP2 >= 50) {
+		const cp = getcurpl();
+		setcurpl(P2);
+		Victory();
+		setcurpl(cp);
+	}
+	once(levelP3 >= 50) {
+		const cp = getcurpl();
+		setcurpl(P3);
+		Victory();
+		setcurpl(cp);
+	}
+}
+
+function defaultAuto() {
+	ModifyUnitHitPoints(All, "Protoss Nexus", P4, "Anywhere", 100);
+	SetInvincibility(Enable, "(any unit)", Force1, "Anywhere");
+}
+
+function defaultStrings() {
+	settblf(tech1_str1, 0, "s\x00Develop \x03S\x01ingularity Charge\nCost: {:t} \x19Gold\x0C", costTech1.stringbuffer());
+	settblf(tech1_str2, 0, "Develop \x03S\x01ingularity Charge\nCost: {:t} \x19Gold\x0C", costTech1.stringbuffer());
+	settblf(tech2_str1, 0, "b\x00Improve \x03B\x01ullet Speed\nCost: {:t} \x19Gold\x0C", costTech2.stringbuffer());
+	settblf(tech2_str2, 0, "Improve \x03B\x01ullet Speed\nCost: {:t} \x19Gold\x0C", costTech2.stringbuffer());
+	settblf(tech3_str1, 0, "d\x00Develop \x03D\x01ouble Cannon\nCost: {:t} \x19Gold\x0C", costTech3.stringbuffer());
+	settblf(tech3_str2, 0, "Develop \x03D\x01ouble Cannon\nCost: {:t} \x19Gold\x0C", costTech3.stringbuffer());
+	settblf(tech4_str1, 0, "i\x00\x03I\x01ncrease Enemy Spawns\nCost: {:t} \x19Gold\x0C", costTech4P1.stringbuffer());
+	settblf(tech4_str2, 0, "\x03I\x01ncrease Enemy Spawns\nCost: {:t} \x19Gold\x0C", costTech4P1.stringbuffer());
+}
+
+function initTechs() {
+	CreateUnitWithProperties(3, buildTech1, "bldg", P8, UnitProperty(intransit=True, invincible=True));
+	GiveUnits(All, buildTech1, P8, "Anywhere", P10);
+	CreateUnitWithProperties(3, buildTech2, "bldg", P8, UnitProperty(intransit=True, invincible=True));
+	GiveUnits(All, buildTech2, P8, "Anywhere", P10);
+	CreateUnitWithProperties(3, buildTech3, "bldg", P8, UnitProperty(intransit=True, invincible=True));
+	GiveUnits(All, buildTech3, P8, "Anywhere", P10);
+	CreateUnitWithProperties(3, buildTech4, "bldg", P8, UnitProperty(intransit=True, invincible=True));
+	GiveUnits(All, buildTech4, P8, "Anywhere", P10);
+}
+
+var leaderboardLoopVar = 1000;
+function leaderboardLoop() {
+	leaderboardLoopVar++;
+	if(leaderboardLoopVar == 300) {
+		LeaderBoardScore(Custom, "\x19Level");
+		LeaderBoardComputerPlayers(Disable);
+	}
+	else if(leaderboardLoopVar >= 600) {
+		leaderboardLoopVar = 0;
+		LeaderBoardKills("(men)", "\x19Total Kills");
+		LeaderBoardComputerPlayers(Disable);
+	}
+}
+
+function onPluginStart() {
+
+	GetGlobalStringBuffer();
+	randomize();
+	defaultStrings();
+	initTechs();
+	
+	var gw_ptr;
+	
+	for(var p = 0; p < 3; p++) {
+		if(Command(p, AtLeast, 1, "Protoss Pylon")) {
+			gw_ptr, gw_epds[p] = cunitepdread_epd(EPD(0x628438));
+			CreateUnitWithProperties(1, "Protoss Gateway", gw_locs[p], p, UnitProperty(invincible=True));
+		}
+	}
+}
+
+function beforeTriggerExec() {
+
+	defaultAuto();
+	if(Command(P1, AtLeast, 1, "(buildings)")) {
+		checkDragoonP1();
+	}
+	if(Command(P2, AtLeast, 1, "(buildings)")) {
+		checkDragoonP2();
+	}
+	if(Command(P3, AtLeast, 1, "(buildings)")) {
+		checkDragoonP3();
+	}
+	displayPlayer();
+	leaderboardLoop();
+	checkVictory();
+	
+	SetMemory(0x6509A0, SetTo, 0);
+}
+
+function afterTriggerExec(){
+
+}
