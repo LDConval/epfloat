@@ -43,7 +43,7 @@ EPFloat uses three EUDVariables: **sign, exponent** and **mantissa** to represen
 
 The **sign** takes an enum value: `zero = 0, positive = 1, negative = 2`.
 
-The **exponent** is the 10-based order of magnitude minus a bias of `EXPONENT_BIAS = 1023`.
+The **exponent** is the 10-based order of magnitude plus a bias of `EXPONENT_BIAS = 1023`.
 
 The **mantissa** is a number between `100000000` (`1e+8`) and `999999999` (`(1e+9)-1`), where the actual mantissa is `1e-8` times this value, i.e. `612345678` represents 6.12345678.
 
