@@ -12,6 +12,6 @@ It is compiled with euddraft 0.10.1.6.
 
 ### Note
 
-I copied the code 3 times to run it for 3 players.
+I copied the code 3 times so it can be played by 3 players.
 
 Hope it does not disconnect. (didn't test)
