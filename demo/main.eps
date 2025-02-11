@@ -176,7 +176,9 @@ function checkDragoonP1() {
 		tech4[P1] = 0;
 		costTech4P1.exponent += 11;
 		if(costTech4P1.mantissa > 900000000) {
-			costTech4P1.mantissa = 111111111;
+			// this causes a weird bug that replaces the EUDVariable to an int
+			// costTech4P1.mantissa = 111111111;
+			costTech4P1.mantissa -= 888888888;
 		}
 		else {
 			costTech4P1.mantissa += 111111111;
@@ -340,7 +342,7 @@ function checkDragoonP2() {
 		tech4[P2] = 0;
 		costTech4P2.exponent += 11;
 		if(costTech4P2.mantissa > 900000000) {
-			costTech4P2.mantissa = 111111111;
+			costTech4P2.mantissa -= 888888888;
 		}
 		else {
 			costTech4P2.mantissa += 111111111;
@@ -504,7 +506,7 @@ function checkDragoonP3() {
 		tech4[P3] = 0;
 		costTech4P3.exponent += 11;
 		if(costTech4P3.mantissa > 900000000) {
-			costTech4P3.mantissa = 111111111;
+			costTech4P3.mantissa -= 888888888;
 		}
 		else {
 			costTech4P3.mantissa += 111111111;
